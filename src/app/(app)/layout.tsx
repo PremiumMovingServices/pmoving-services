@@ -8,6 +8,7 @@ import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { headers } from "next/headers";
+import { BASE_URL } from "@/utils";
 
 const inter = Inter({
 	variable: "--font-inter",
@@ -15,6 +16,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+	metadataBase: new URL(BASE_URL),
+alternates: { canonical: "./" },
 	title: "Trusted Movers Near me | Premium Moving Services",
 	description:
 		"Get premium moving services available at the snap of a finger. From local, commercial, long-distance to specialty moving, we help you move as smoothly as it gets.",
