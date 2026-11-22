@@ -133,9 +133,9 @@ export const Hero: FC<HeroProps> = (props) => {
 									<GoogleMapsIcon aria-hidden="false" className="size-12" />
 								</Link>
 							)}
-							<h2 className="text-3xl font-black tracking-tight text-black sm:text-4xl">
+							<h1 className="text-3xl font-black tracking-tight text-black sm:text-4xl">
 								{props.title} Movers
-							</h2>
+							</h1>
 						</div>
 						<div className="mt-6 max-w-xl lg:mt-0 xl:col-end-1 xl:row-start-1">
 							<p className="text-lg font-medium text-pretty text-gray-500 sm:text-xl/8">

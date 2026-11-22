@@ -30,7 +30,7 @@ export const Hero: FC<HeroProps> = ({ post }) => {
 						: "Latest"}
 				</div>
 				<a
-					href={`/blogs/${post.slug}`}
+					href={`/blogs/${encodeURIComponent(post.slug)}`}
 					className="text-2xl block capitalize sm:text-3xl md:text-4xl font-medium text-white mb-3 group-hover:underline hover:text-moving-yellow hover:underline transition-colors delay-150 duration-300"
 				>
 					{post.title}

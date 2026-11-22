@@ -15,6 +15,7 @@ import { RequestQuote } from "../../services/local-moving/residential-movers/req
 import { MINNESOTA_CENTRE } from "@/data/map";
 import { getPricingForServiceArea } from "@/data/pricing";
 import { ServiceAreaMap } from "../service-areas-map";
+import { getServiceAreaTitle } from "@/data/service-area-seo";
 
 type Props = {
 	params: Promise<{ slug: string }>;
@@ -54,7 +55,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 		imageUrl = serviceArea.mapImage.url || "";
 	}
 
-	const title = `Professional Moving Services in ${serviceArea.title}, ${serviceArea["state-name"]}`;
+	const title = getServiceAreaTitle(
+		serviceArea.title,
+		serviceArea["state-name"],
+	);
 
 	const description = serviceArea.description
 		? `${serviceArea.description.substring(0, 155)}...`

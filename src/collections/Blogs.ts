@@ -1,4 +1,5 @@
 import type { CollectionConfig } from "payload";
+import { slugify } from "./hooks/slugify";
 
 export const Blogs: CollectionConfig = {
 	slug: "blogs",
@@ -97,10 +98,20 @@ export const Blogs: CollectionConfig = {
 	],
 	hooks: {
 		beforeValidate: [
-			({ data }) => {
-				if (data?.title && !data?.slug) {
-					data.slug = data?.title.trim().toLowerCase().replaceAll(" ", "-");
+			({ data, originalDoc }) => {
+				if (!data) return data;
+
+				const current: string | undefined = data.slug || originalDoc?.slug;
+
+				if (current) {
+					// Slugs containing ? & , : ' etc. break URLs, so they are cleaned
+					// automatically the next time the blog is saved.
+					const clean = slugify(current);
+					if (clean !== current) data.slug = clean;
+				} else if (data.title) {
+					data.slug = slugify(data.title);
 				}
+
 				return data;
 			},
 		],

@@ -1,4 +1,5 @@
 import { getPayload } from "payload";
+import type { Where } from "payload";
 import config from "@payload-config";
 import { OurLocations } from "@/components/OurLocations";
 
@@ -6,25 +7,56 @@ import type { Metadata } from "next";
 import type { Blog } from "@/payload-types";
 import { BASE_URL, COMPANY } from "@/utils";
 import { Post } from "./post";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { ChartRenderer } from "@/components/ChartRenderer";
+import { slugify } from "@/collections/hooks/slugify";
 
 type Props = {
 	params: Promise<{ slug: string }>;
 };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-	const { slug } = await params;
+function safeDecode(value: string) {
+	try {
+		return decodeURIComponent(value);
+	} catch {
+		return value;
+	}
+}
 
+/**
+ * Finds a blog from the slug in the URL.
+ *  1. exact match (the normal case)
+ *  2. exact match on the cleaned-up slug (old URLs that contained ? & , : ' etc.)
+ *  3. partial match (kept because old-site redirects point at shortened slugs)
+ *
+ * `exact` is false for 2 and 3, so the page can 308-redirect to the single
+ * canonical URL instead of serving the same blog under several URLs.
+ */
+async function findBlog(rawSlug: string) {
+	const slug = safeDecode(rawSlug);
 	const payload = await getPayload({ config });
 
-	const blog = (
-		await payload.find({
-			collection: "blogs",
-			where: { slug: { equals: decodeURIComponent(slug) } },
-			limit: 1,
-		})
-	).docs[0] as Blog;
+	const find = async (where: Where) =>
+		(await payload.find({ collection: "blogs", where, limit: 1 }))
+			.docs[0] as Blog | undefined;
+
+	const exact = await find({ slug: { equals: slug } });
+	if (exact) return { blog: exact, exact: true };
+
+	const cleaned = slugify(slug);
+	if (cleaned && cleaned !== slug) {
+		const byCleaned = await find({ slug: { equals: cleaned } });
+		if (byCleaned) return { blog: byCleaned, exact: false };
+	}
+
+	const partial = await find({ slug: { contains: slug } });
+	return { blog: partial, exact: false };
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+	const { slug: rawSlug } = await params;
+
+	const { blog } = await findBlog(rawSlug);
 
 	if (!blog) {
 		return {
@@ -34,7 +66,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 		};
 	}
 
-	const canonicalUrl = `${BASE_URL}/blogs/${slug}`;
+	// Always the blog's real slug, never whatever variation was requested.
+	const canonicalUrl = `${BASE_URL}/blogs/${encodeURIComponent(blog.slug)}`;
 
 	// og-image / twitter card image
 	let imageUrl = "";
@@ -103,20 +136,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function SingleBlogPage({ params }: Props) {
 	const resolvedParams = await params;
 
-	const slug = decodeURIComponent(resolvedParams.slug);
-
-	const payload = await getPayload({ config });
-
-	const blog = (
-		await payload.find({
-			collection: "blogs",
-			where: { slug: { contains: slug } },
-			limit: 1,
-		})
-	).docs[0] as Blog;
+	const { blog, exact } = await findBlog(resolvedParams.slug);
 
 	if (!blog) {
 		return notFound();
+	}
+
+	// Old / shortened / malformed URL: send visitors and Google to the one real URL.
+	if (!exact) {
+		permanentRedirect(`/blogs/${encodeURIComponent(blog.slug)}`);
 	}
 
 	const chartData = blog.chart;
