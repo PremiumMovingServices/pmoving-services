@@ -105,7 +105,7 @@ export const Post: FC<{ post: Blog }> = ({ post }) => {
 			</div>
 			<div className="mt-6">
 				<a
-					href={`/blogs/${post.slug}`}
+					href={`/blogs/${encodeURIComponent(post.slug)}`}
 					className="relative flex items-center justify-center rounded-md border border-transparent bg-gray-100 px-8 py-2 text-sm font-medium text-gray-900 hover:bg-gray-200"
 				>
 					Read<span className="sr-only">, {post.title}</span>

@@ -119,7 +119,7 @@ export default async function SitemapPage() {
 							blogs.docs.map((doc, docIdx) => (
 								<Link
 									key={doc.id}
-									href={`/blogs/${doc.slug}`}
+									href={`/blogs/${encodeURIComponent(doc.slug)}`}
 									className="block capitalize hover:underline"
 								>
 									{docIdx + 1}. {doc.title?.toLowerCase()}
